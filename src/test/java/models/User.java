@@ -32,4 +32,17 @@ public class User {
     public int hashCode() {
         return Objects.hash(username, firstName, lastName, email, password, phone, userStatus);
     }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "username='" + username + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", email='" + email + '\'' +
+                ", password='" + password + '\'' +
+                ", phone='" + phone + '\'' +
+                ", userStatus=" + userStatus +
+                '}';
+    }
 }
