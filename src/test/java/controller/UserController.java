@@ -50,13 +50,13 @@ public class UserController {
                 .put(USER_ENDPOINT + user.getUsername());
     }
 
-    public Response deleteUser(String  userName) {
+    public Response deleteUser(User user) {
         int attemptNumber = 0;
         Response response = null;
         while (attemptNumber < 5) {
             response = given(requestSpecification)
                     .when()
-                    .delete(USER_ENDPOINT + userName);
+                    .delete(USER_ENDPOINT + user.getUsername());
             if (response.contentType() != null && response.contentType().contains("application/json")) {
                 return response;
             }
