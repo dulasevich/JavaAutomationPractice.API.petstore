@@ -4,16 +4,16 @@ import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
-import models.User;
+import models.pet.Pet;
 
 import static constants.ApiConstants.BASE_URL;
 import static io.restassured.RestAssured.given;
 
-public class UserController {
-    private static final String USER_ENDPOINT = "user/";
+public class PetController {
+    private static final String PET_ENDPOINT = "pet/";
     RequestSpecification requestSpecification;
 
-    public UserController() {
+    public PetController() {
         requestSpecification = given()
                 .baseUri(BASE_URL)
                 .contentType(ContentType.JSON)
@@ -21,29 +21,29 @@ public class UserController {
                 .filter(new AllureRestAssured());
     }
 
-    public Response getUser(User user) {
+    public Response getPet(Pet pet) {
         return given(requestSpecification)
                 .when()
-                .get(USER_ENDPOINT + user.getUsername());
+                .get(PET_ENDPOINT + pet.getId());
     }
 
-    public Response addUser(User user) {
+    public Response addPet(Pet pet) {
         return given(requestSpecification)
-                .body(user)
+                .body(pet)
                 .when()
-                .post(USER_ENDPOINT);
+                .post(PET_ENDPOINT);
     }
 
-    public Response updateUser(User user) {
+    public Response updatePet(Pet pet) {
         return given(requestSpecification)
-                .body(user)
+                .body(pet)
                 .when()
-                .put(USER_ENDPOINT + user.getUsername());
+                .put(PET_ENDPOINT);
     }
 
-    public Response deleteUser(User user) {
+    public Response deletePet(Pet pet) {
         return given(requestSpecification)
                 .when()
-                .delete(USER_ENDPOINT + user.getUsername());
+                .delete(PET_ENDPOINT + pet.getId());
     }
 }
