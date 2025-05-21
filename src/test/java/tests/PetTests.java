@@ -42,7 +42,7 @@ public class PetTests {
 
     @Test
     void updatePetTest() {
-        petController.addPet(PET_TO_UPDATE).as(Pet.class);
+        petController.addPet(PET_TO_UPDATE);
         Pet updatedPet = PET_TO_UPDATE.toBuilder()
                 .name("NewPet")
                 .photoUrls(List.of("NewPetUrl"))
@@ -57,10 +57,10 @@ public class PetTests {
     void deletePetTest() {
         Pet petCreated = petController.addPet(DEFAULT_PET).as(Pet.class);
 
-        Response deletePatResponse = petController.deletePet(DEFAULT_PET);
-        Assertions.assertEquals(200, deletePatResponse.statusCode(), "Incorrect response  code");
+        Response deletePetResponse = petController.deletePet(DEFAULT_PET);
+        Assertions.assertEquals(200, deletePetResponse.statusCode(), "Incorrect response  code");
 
-        ApiResponse responseBody = deletePatResponse.getBody().as(ApiResponse.class);
+        ApiResponse responseBody = deletePetResponse.getBody().as(ApiResponse.class);
         Assertions.assertEquals(200,responseBody.getCode(), "Code is wrong");
         Assertions.assertEquals(API_RESPONSE_TYPE, responseBody.getType(), "Type is wrong");
         Assertions.assertEquals(String.valueOf(petCreated.getId()), responseBody.getMessage(), "Message is wrong");
