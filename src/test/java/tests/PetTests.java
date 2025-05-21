@@ -25,11 +25,11 @@ public class PetTests {
 
     @Test
     void getPetTest() {
-        Pet petCreated = petController.addPet(DEFAULT_PET).as(Pet.class);
+        petController.addPet(DEFAULT_PET);
 
         Response getPetResponse = petController.getPet(DEFAULT_PET);
         Assertions.assertEquals(200, getPetResponse.statusCode(), "Incorrect response  code");
-        Assertions.assertEquals(DEFAULT_PET, petCreated, "Pet is wrong");
+        Assertions.assertEquals(DEFAULT_PET, getPetResponse.as(Pet.class), "Pet is wrong");
     }
 
     @Test
