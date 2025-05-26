@@ -2,7 +2,7 @@ package controller;
 
 import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.http.ContentType;
-import io.restassured.response.Response;
+import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import models.User;
 
@@ -11,7 +11,7 @@ import static io.restassured.RestAssured.given;
 
 public class UserController {
     private static final String USER_ENDPOINT = "user/";
-    RequestSpecification requestSpecification;
+    private final RequestSpecification requestSpecification;
 
     public UserController() {
         requestSpecification = given()
@@ -21,29 +21,37 @@ public class UserController {
                 .filter(new AllureRestAssured());
     }
 
-    public Response getUser(User user) {
-        return given(requestSpecification)
+    public HttpResponse getUser(User user) {
+        ValidatableResponse response =  given(requestSpecification)
                 .when()
-                .get(USER_ENDPOINT + user.getUsername());
+                .get(USER_ENDPOINT + user.getUsername())
+                .then();
+        return new HttpResponse(response);
     }
 
-    public Response addUser(User user) {
-        return given(requestSpecification)
+    public HttpResponse addUser(User user) {
+        ValidatableResponse response = given(requestSpecification)
                 .body(user)
                 .when()
-                .post(USER_ENDPOINT);
+                .post(USER_ENDPOINT)
+                .then();
+        return new HttpResponse(response);
     }
 
-    public Response updateUser(User user) {
-        return given(requestSpecification)
+    public HttpResponse updateUser(User user) {
+        ValidatableResponse response = given(requestSpecification)
                 .body(user)
                 .when()
-                .put(USER_ENDPOINT + user.getUsername());
+                .put(USER_ENDPOINT + user.getUsername())
+                .then();
+        return new HttpResponse(response);
     }
 
-    public Response deleteUser(User user) {
-        return given(requestSpecification)
+    public HttpResponse deleteUser(User user) {
+        ValidatableResponse response = given(requestSpecification)
                 .when()
-                .delete(USER_ENDPOINT + user.getUsername());
+                .delete(USER_ENDPOINT + user.getUsername())
+                .then();
+        return new HttpResponse(response);
     }
 }
