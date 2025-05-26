@@ -1,11 +1,8 @@
 package tests;
 
-import models.ApiResponse;
 import controller.UserController;
-import io.restassured.response.Response;
 import models.User;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,91 +21,72 @@ public class UserTests {
 
     @Test
     void getUserTest() {
-        long createdUserId = Long.parseLong(userController.addUser(DEFAULT_USER)
-                .as(ApiResponse.class).getMessage());
+        String createdUserId = userController.addUser(DEFAULT_USER).statusCodeIs(200).getJsonValue("message");
 
-        Response getUserResponse = userController.getUser(DEFAULT_USER);
-        User userCreated = getUserResponse.getBody().as(User.class);
-
-        Assertions.assertEquals(200, getUserResponse.statusCode(), "Incorrect response  code");
-        Assertions.assertEquals(createdUserId, userCreated.getId(), "Id is wrong");
-        Assertions.assertEquals(DEFAULT_USER, userCreated, "User is wrong");
-    }
-
-    @Test
-    void createUserTest() {
-        Response addUserResponse = userController.addUser(DEFAULT_USER);
-        Assertions.assertEquals(200, addUserResponse.statusCode(), "Incorrect response code");
-
-        Response getUserResponse = userController.getUser(DEFAULT_USER);
-        User actualUser = getUserResponse.as(User.class);
-
-        Assertions.assertEquals(200, getUserResponse.statusCode(), "Incorrect status code");
-        Assertions.assertEquals(DEFAULT_USER, actualUser, "User created is wrong");
-        Assertions.assertTrue(actualUser.getId() > DEFAULT_USER.getId(), "User created id is wrong");
+        userController.getUser(DEFAULT_USER)
+                .statusCodeIs(200)
+                .jsonValueIs("id", createdUserId)
+                .jsonValueIs("username", DEFAULT_USER.getUsername())
+                .jsonValueIs("firstName", DEFAULT_USER.getFirstName())
+                .jsonValueIs("lastName", DEFAULT_USER.getLastName())
+                .jsonValueIs("email", DEFAULT_USER.getEmail())
+                .jsonValueIs("password", DEFAULT_USER.getPassword())
+                .jsonValueIs("phone", DEFAULT_USER.getPhone())
+                .jsonValueIs("userStatus", String.valueOf(DEFAULT_USER.getUserStatus()));
     }
 
     @Test
     void createUserResponseTest() {
-        Response addUserResponse = userController.addUser(DEFAULT_USER);
-        Assertions.assertEquals(200, addUserResponse.statusCode(), "Incorrect response code");
-
-        ApiResponse responseBody = addUserResponse.getBody().as(ApiResponse.class);
-        Assertions.assertEquals(200, responseBody.getCode(), "Code is wrong");
-        Assertions.assertEquals(API_RESPONSE_TYPE, responseBody.getType(), "Type is wrong");
-        Assertions.assertTrue(Long.parseLong(responseBody.getMessage()) > DEFAULT_USER.getId(),
-                "Message is wrong");
+        userController.addUser(DEFAULT_USER)
+                .statusCodeIs(200)
+                .jsonValueIs("code", "200")
+                .jsonValueIs("type", API_RESPONSE_TYPE)
+                .jsonValueBiggerThan("message", DEFAULT_USER.getId());
     }
 
     @Test
     void updateUserTest() {
-        userController.addUser(USER_TO_UPDATE);
-        User updatedUser = USER_TO_UPDATE.toBuilder()
-                .firstName(NEW_FIRST_NAME)
-                .build();
+        String createdUserId = userController.addUser(USER_TO_UPDATE).statusCodeIs(200).getJsonValue("message");
+        User updatedUser = USER_TO_UPDATE.toBuilder().firstName(NEW_FIRST_NAME).build();
 
-        Response updateUserResponse = userController.updateUser(updatedUser);
-        Assertions.assertEquals(200, updateUserResponse.statusCode(), "Incorrect response code");
+        userController.updateUser(updatedUser)
+                .statusCodeIs(200);
 
-        Response getUserResponse = userController.getUser(updatedUser);
-        User actualUser = getUserResponse.getBody().as(User.class);
-
-        Assertions.assertEquals(200, getUserResponse.statusCode(), "Code is wrong");
-        Assertions.assertEquals(updatedUser, actualUser, String.format("Expected user - {%s} \n Actual user - {%s}",
-                updatedUser, actualUser));
+        userController.getUser(updatedUser)
+                .statusCodeIs(200)
+                .jsonValueIs("id", createdUserId)
+                .jsonValueIs("username", updatedUser.getUsername())
+                .jsonValueIs("firstName", updatedUser.getFirstName())
+                .jsonValueIs("lastName", updatedUser.getLastName())
+                .jsonValueIs("email", updatedUser.getEmail())
+                .jsonValueIs("password", updatedUser.getPassword())
+                .jsonValueIs("phone", updatedUser.getPhone())
+                .jsonValueIs("userStatus", String.valueOf(updatedUser.getUserStatus()));
     }
 
     @Test
     void updateUserResponseTest() {
-        userController.addUser(USER_TO_UPDATE);
+        String createdUserId = userController.addUser(USER_TO_UPDATE).statusCodeIs(200).getJsonValue("message");
         User updatedUser = USER_TO_UPDATE.toBuilder()
+                .id(Long.parseLong(createdUserId))
                 .firstName(NEW_FIRST_NAME)
                 .build();
 
-        long userToUpdateId = Long.parseLong(userController.addUser(updatedUser).as(ApiResponse.class).getMessage());
-        updatedUser.setId(userToUpdateId);
-
-        Response updateUserResponse = userController.updateUser(updatedUser);
-        Assertions.assertEquals(200, updateUserResponse.statusCode(), "Incorrect response code");
-
-        ApiResponse responseBody = updateUserResponse.getBody().as(ApiResponse.class);
-        Assertions.assertEquals(200, responseBody.getCode(), "Code is wrong");
-        Assertions.assertEquals(API_RESPONSE_TYPE, responseBody.getType(), "Type is wrong");
-        Assertions.assertEquals(userToUpdateId, Long.parseLong(responseBody.getMessage()), "Message is wrong");
+        userController.updateUser(updatedUser)
+                .statusCodeIs(200)
+                .jsonValueIs("code", "200")
+                .jsonValueIs("type", API_RESPONSE_TYPE)
+                .jsonValueIs("message", createdUserId);
     }
 
     @Test
     void deleteUserTest() {
         userController.addUser(DEFAULT_USER);
-
-        Response deleteUserResponse = userController.deleteUser(DEFAULT_USER);
-        Assertions.assertEquals(200, deleteUserResponse.statusCode(), "Status code is wrong");
-
-        ApiResponse responseBody = deleteUserResponse.getBody().as(ApiResponse.class);
-        Assertions.assertEquals(200, responseBody.getCode(), "Code is wrong");
-        Assertions.assertEquals(API_RESPONSE_TYPE, responseBody.getType(), "Type is wrong");
-        Assertions.assertEquals(DEFAULT_USER.getUsername(), responseBody.getMessage(), "Message is wrong");
-        Assertions.assertEquals(404, userController.getUser(DEFAULT_USER).statusCode(),
-                "Status code is wrong");
+        userController.deleteUser(DEFAULT_USER)
+                .statusCodeIs(200)
+                .jsonValueIs("code", "200")
+                .jsonValueIs("type", API_RESPONSE_TYPE)
+                .jsonValueIs("message", DEFAULT_USER.getUsername());
+        userController.getUser(DEFAULT_USER).statusCodeIs(404);
     }
 }

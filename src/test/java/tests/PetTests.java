@@ -1,14 +1,15 @@
 package tests;
 
 import controller.PetController;
-import io.restassured.response.Response;
-import models.ApiResponse;
 import models.pet.Pet;
+import models.pet.PetStatus;
+import models.pet.Tags;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 import static constants.ApiConstants.*;
@@ -25,45 +26,74 @@ public class PetTests {
 
     @Test
     void getPetTest() {
-        petController.addPet(DEFAULT_PET);
+        petController.addPet(DEFAULT_PET).statusCodeIs(200);
 
-        Response getPetResponse = petController.getPet(DEFAULT_PET);
-        Assertions.assertEquals(200, getPetResponse.statusCode(), "Incorrect response  code");
-        Assertions.assertEquals(DEFAULT_PET, getPetResponse.as(Pet.class), "Pet is wrong");
+        petController.getPet(DEFAULT_PET)
+                .statusCodeIs(200)
+                .jsonValueIs("id", String.valueOf(DEFAULT_PET.getId()))
+                .jsonValueIs("category.id", String.valueOf(DEFAULT_PET.getCategory().getId()))
+                .jsonValueIs("category.name", DEFAULT_PET.getCategory().getName())
+                .jsonValueIs("name", DEFAULT_PET.getName())
+                .jsonValueIs("photoUrls", DEFAULT_PET.getPhotoUrls(), String.class)
+                .jsonValueIs("tags", DEFAULT_PET.getTags(), Tags.class)
+                .jsonValueIs("status", String.valueOf(DEFAULT_PET.getStatus()));
     }
 
     @Test
     void createPetTest() {
-        Response createPetResponse = petController.addPet(DEFAULT_PET);
-
-        Assertions.assertEquals(200, createPetResponse.statusCode(), "Incorrect response code");
-        Assertions.assertEquals(DEFAULT_PET, createPetResponse.as(Pet.class), "Pet created is wrong");
+        petController.addPet(DEFAULT_PET)
+                .statusCodeIs(200)
+                .jsonValueIs("id", String.valueOf(DEFAULT_PET.getId()))
+                .jsonValueIs("category.id", String.valueOf(DEFAULT_PET.getCategory().getId()))
+                .jsonValueIs("category.name", DEFAULT_PET.getCategory().getName())
+                .jsonValueIs("name", DEFAULT_PET.getName())
+                .jsonValueIs("photoUrls", DEFAULT_PET.getPhotoUrls(), String.class)
+                .jsonValueIs("tags", DEFAULT_PET.getTags(), Tags.class)
+                .jsonValueIs("status", String.valueOf(DEFAULT_PET.getStatus()));
     }
 
     @Test
     void updatePetTest() {
-        petController.addPet(PET_TO_UPDATE);
+        petController.addPet(PET_TO_UPDATE).statusCodeIs(200);
         Pet updatedPet = PET_TO_UPDATE.toBuilder()
                 .name("NewPet")
                 .photoUrls(List.of("NewPetUrl"))
+                .status(PetStatus.PENDING)
                 .build();
 
-        Response updatePetResponse = petController.updatePet(updatedPet);
-        Assertions.assertEquals(200, updatePetResponse.statusCode(), "Incorrect response code");
-        Assertions.assertEquals(updatedPet, updatePetResponse.as(Pet.class), "Pet was updated incorrectly");
+        petController.updatePet(updatedPet)
+                .statusCodeIs(200)
+                .jsonValueIs("id", String.valueOf(updatedPet.getId()))
+                .jsonValueIsNull("category.id")
+                .jsonValueIsNull("category.name")
+                .jsonValueIs("name", updatedPet.getName())
+                .jsonValueNotNull("photoUrls")
+                .jsonValueIs("tags", Collections.emptyList(), Tags.class)
+                .jsonValueIs("status", String.valueOf(updatedPet.getStatus()));
     }
 
     @Test
     void deletePetTest() {
-        Pet petCreated = petController.addPet(DEFAULT_PET).as(Pet.class);
+        petController.addPet(DEFAULT_PET).statusCodeIs(200);
 
-        Response deletePetResponse = petController.deletePet(DEFAULT_PET);
-        Assertions.assertEquals(200, deletePetResponse.statusCode(), "Incorrect response  code");
+        petController.deletePet(DEFAULT_PET)
+                .statusCodeIs(200)
+                .jsonValueIs("code", "200")
+                .jsonValueIs("type", API_RESPONSE_TYPE)
+                .jsonValueBiggerThan("message", DEFAULT_USER.getId());
+        petController.getPet(DEFAULT_PET).statusCodeIs(404);
+    }
 
-        ApiResponse responseBody = deletePetResponse.getBody().as(ApiResponse.class);
-        Assertions.assertEquals(200,responseBody.getCode(), "Code is wrong");
-        Assertions.assertEquals(API_RESPONSE_TYPE, responseBody.getType(), "Type is wrong");
-        Assertions.assertEquals(String.valueOf(petCreated.getId()), responseBody.getMessage(), "Message is wrong");
-        Assertions.assertEquals(404, petController.getPet(DEFAULT_PET).statusCode(), "Status code is wrong");
+    @Test
+    void uploadImageTest() {
+        petController.addPet(DEFAULT_PET).statusCodeIs(200);
+
+        File file = new File("src/test/resources/hello-world.png");
+
+        petController.uploadImage(DEFAULT_PET) //not putting real DEFAULT_PET id since server accepts only integer
+                .statusCodeIs(200)
+                .jsonValueIs("code", "200")
+                .jsonValueIs("type", API_RESPONSE_TYPE)
+                .jsonValueContains("message", file.getName(), file.length());
     }
 }
